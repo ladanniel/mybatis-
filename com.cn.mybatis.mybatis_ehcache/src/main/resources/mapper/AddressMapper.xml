@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" 
+	"http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<mapper namespace="cn.tedu.store.entity.Address">
+
+	<!-- 新增收货地址 -->
+	<!-- Integer insert(Address address) -->
+	<!--将插入数据的主键返回到address对象中
+	 select last_insert_id()：得到insert进去记录的主键值，只适用于自增主键
+	 keyPorperty:将查询到主键值设置到parameterType制定的对象的那个属性
+	 order：select last_insert_id()执行顺序，相对于insert语句来说他的执行顺序
+	-->
+	
+	<insert id="insert"
+		parameterType="cn.tedu.store.entity.Address"
+		useGeneratedKeys="true"
+		keyProperty="id">
+		<!--查询自增主键-->
+		<selectKey keyProperty="id" order="AFTER">
+	   select last_insert_id()
+	   </selectKey>
+	   <!--查询非自增主键 insert语句中必须写 id  ,id=#{id}
+	   执行过程：首先通过uuid()得到主键，将主键设置到address的id属性中，其次在insert执行时，从address对象中取出id属性值
+	   -->
+	   <selectKey keyProperty="id" order="BEFORE">
+	   select uuid()
+	   </selectKey>
+		INSERT INTO t_address (
+			uid,
+			recv_name,
+			recv_province,	recv_city,		recv_area,
+			recv_district,	recv_address,
+			recv_zip, 		recv_phone, 	recv_tel,
+			tag, is_default,
+			created_user,	created_time, 
+			modified_user,	modified_time 
+		) VALUES (
+			#{uid},
+			#{recvName},
+			#{recvProvince}, #{recvCity}, #{recvArea},
+			#{recvDistrict}, #{recvAddress},
+			#{recvZip}, #{recvPhone}, #{recvTel},
+			#{tag}, #{isDefault},
+			#{createdUser}, #{createdTime}, 
+			#{modifiedUser}, #{modifiedTime} 
+		)
+	</insert>
+	
+	<!-- 查询收货地址信息 -->
+	<!-- List<Address> select(
+			@Param("where")		String where, 
+			@Param("orderBy")	String orderBy, 
+			@Param("offset")	Integer offset, 
+			@Param("countPerPage") Integer countPerPage) -->
+	<select id="select" resultType="cn.tedu.store.entity.Address">
+		SELECT 
+			id, 
+			uid, 
+			recv_name AS recvName, 
+			recv_province AS recvProvince,	
+			recv_city AS recvCity,		
+			recv_area AS recvArea,
+			recv_district AS recvDistrict,	
+			recv_address AS recvAddress,
+			recv_zip AS recvZip, 		
+			recv_phone AS recvPhone, 	
+			recv_tel AS recvTel,
+			tag, 
+			is_default AS isDefault,
+			created_user AS createdUser,	
+			created_time AS createdTime, 
+			modified_user AS modifiedUser,	
+			modified_time AS modifiedTime  
+		FROM t_address 
+		
+		<if test="where != null">
+		WHERE ${where} 
+		</if>
+		
+		<if test="orderBy != null">
+		ORDER BY ${orderBy} 
+		</if>
+		
+		<if test="offset != null">
+		LIMIT #{offset}, #{countPerPage}
+		</if>	
+	</select>
+	
+	<!-- 删除收货地址数据 -->
+	<!-- Integer delete(String where) -->
+	<delete id="delete">
+		DELETE FROM t_address WHERE ${where}
+	</delete>
+	
+	<!-- 修改收货地址数据 -->
+	<!-- Integer update(Address address) -->
+	<update id="update"
+		parameterType="cn.tedu.store.entity.Address">
+		UPDATE t_address SET  
+			<if test="isDefault == null">
+				recv_name=#{recvName}, 
+				recv_province=#{recvProvince},
+				recv_city=#{recvCity},
+				recv_area=#{recvArea},
+				recv_district=#{recvDistrict},
+				recv_address=#{recvAddress},
+				recv_phone=#{recvPhone},
+				recv_tel=#{recvTel},
+				recv_zip=#{recvZip},
+				tag=#{tag},
+			</if>
+	
+			<if test="isDefault != null">
+				is_default=#{isDefault},
+			</if>
+			
+			modified_user = #{modifiedUser}, 
+			modified_Time = #{modifiedTime} 
+		WHERE 
+			uid=#{uid} 
+			<if test="id != null">
+				AND id=#{id}
+			</if>
+	</update>
+
+</mapper>
+
+
+
+
+
+
+
+
+
+
+

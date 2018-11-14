@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE mapper PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN" 
+	"http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd">
+
+<!-- namespace：匹配的接口  作用是隔离作用 其中#{}为占位符-->
+<mapper namespace="com.cn.mybatis.mapper.OrderMapperCustom">
+<!-- 二级缓存 -->
+ <cache></cache>
+  <!-- 关联查询:查询订单管来呢查询用户 -->
+  <select id="findOrderUser" resultType="OrderCustom">
+ select orders.*,users.username,users.sex,users.address from orders,users where orders.user_id = users.id
+  </select>
+                     <!-- resultMap将查询结果的订单信息映射到orders对象中，在orders类中添加users属性，将关联查询出来的用户信息映射到orders对象中的users属性中 -->
+<resultMap type="com.cn.mybatis.pojo.Orders" id="OrderUserResultMap">
+                     <!-- 配置映射的订单信息  如果有多个列组成唯一标识，就要配置多个id property 订单的id-->
+
+
+   <id column="id" property="id"/>
+   <result column="user_id" property="userId"/>
+   <result column="number" property="number"/>
+   <result column="createtime" property="createtime"/>
+   <result column="note" property="note"/>
+              <!-- 配置映射的用户信息  association:用于映射关联查询单个对象的信息 property：要将关联查询的用户信息映射到orders中的那个属性(users)-->
+<association property="users" javaType="com.cn.mybatis.pojo.Users">
+               <!-- column:指定唯一标识用户信息列， javaType：映射到users的那个属性-->
+     <id column="user_id" property="id"/>
+     <result column="username" property="username"/>
+     <result column="sex" property="sex"/>
+     <result column="address" property="address"/>
+</association>
+</resultMap>
+
+
+<select id="findOrderUserResultMap" resultMap="OrderUserResultMap">
+ select orders.*,users.username,users.sex,users.address from orders,users where orders.user_id = users.id
+  </select>
+  
+  <!-- 出现大量重复，则使用继承 -->
+  <!-- 订单及订单明细的resultMap一对多 -->
+  <resultMap type="com.cn.mybatis.pojo.Orders" id="OrderUserAndOrderDetail" extends="OrderUserResultMap">
+  
+          <!-- 订单明细 一个订单关联查询出多条信息，使用collection进行映射，
+                 collection：对关联查询到的多条记录映射到集合对象中 property = Orders中的那个属性
+                 ofType:映射到集合属性中的类型
+                -->
+<collection property="orderDetail" ofType="com.cn.mybatis.pojo.OrderDetails">
+       <id column="orderdetail_id" property="id"/>
+       <result column="iterms_id" property="iterms_id"/>
+       <result column="items_number" property="items_number"/>
+
+</collection>
+
+</resultMap>
+<!-- 一对多 -->
+ <select id="findOrderUserAndOrderDetail" resultMap="OrderUserAndOrderDetail">
+ select orders.*,users.username,users.sex,users.address,orderdetail.id orderdetail_id,orderdetail.iterms_id,orderdetail.items_number,orderdetail.orders_id from orders,users,orderdetail where orders.user_id = users.id
+  </select>
+
+ <!-- 延迟加载  查询用户，用户信息延迟加载-->
+ <resultMap type="com.cn.mybatis.pojo.Orders" id="OrderUserLazyLoading">
+      <id column="id" property="id"/>
+      <result column="user_id" property="userId"/>
+      <result column="number" property="number"/>
+      <result column="createtime" property="createtime"/>
+      <result column="note" property="note"/>
+      <!-- 延迟加载 select:指定延迟加载的sql语句id：即：根据 user_id 查询用户信息的id
+      这里使用findUserById  id(即user_id) 完成用户信息查询，如果findUserById不在本mapper中的命名空间中，则要添加namespace
+        column:订单信息中关联用户信息查询的列 user_id
+        
+        -->
+      <association property="users" javaType="com.cn.mybatis.pojo.Users" 
+      select="com.cn.mybatis.mapper.OrderMapperCustom.findUserById" column="user_id">
+       
+      
+      </association>
+ 
+ </resultMap>
+ <select id="findOrderUserLazyLoading" resultMap="OrderUserLazyLoading">
+    select * from orders
+  </select>
+ <select id="findUserById" parameterType="int" resultType="users">
+   select * from users where id=#{value}
+ </select>
+</mapper>
